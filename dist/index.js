@@ -184,6 +184,9 @@ function useUploaderMultiFile(config) {
                             (_a = options.onComplete) === null || _a === void 0 ? void 0 : _a.call(options, Object.assign(Object.assign({}, response), { fileName: file.name, fileId: file.name }), file);
                         }, onError: (error) => {
                             var _a;
+                            if (!fileResponses[file.name]) {
+                                delete fileResponses[file.name];
+                            }
                             setUploadState(prev => {
                                 const updatedFiles = Object.assign(Object.assign({}, prev.files), { [file.name]: Object.assign(Object.assign({}, prev.files[file.name]), { status: 'error', error: error.error || error }) });
                                 const hasInProgressFiles = Object.values(updatedFiles)
@@ -201,18 +204,19 @@ function useUploaderMultiFile(config) {
                             (_a = options.onStart) === null || _a === void 0 ? void 0 : _a.call(options, file);
                         } }));
                     fileResponses[file.name] = response;
-                    return response;
+                    return { success: true, response };
                 }
                 catch (error) {
                     const errorObj = error instanceof Error ? error : new Error('Upload failed');
                     setUploadState(prev => (Object.assign(Object.assign({}, prev), { files: Object.assign(Object.assign({}, prev.files), { [file.name]: Object.assign(Object.assign({}, prev.files[file.name]), { status: 'error', error: errorObj }) }) })));
                     (_a = options.onError) === null || _a === void 0 ? void 0 : _a.call(options, errorObj, file);
-                    return fileResponses[file.name] || null;
+                    return { success: false, response: fileResponses[file.name] };
                 }
             }));
             yield Promise.allSettled(uploadPromises);
-            console.log("Upload completed final:", fileResponses);
-            return fileResponses;
+            const successfulResponses = Object.fromEntries(Object.entries(fileResponses).filter(([_, response]) => response != null));
+            console.log("Upload completed final:", successfulResponses);
+            return successfulResponses;
         }
         catch (error) {
             console.error("Upload failed:", error);
