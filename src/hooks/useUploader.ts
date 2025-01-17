@@ -5,7 +5,6 @@ export type Provider = 'aws' | 'apexx';
 
 export interface UploaderConfig {
   provider: Provider;
-  url: string;
   getSignedUrl: (operation: string, params: Record<string, any>) => Promise<string>;
 }
 
@@ -41,10 +40,10 @@ export function useUploader(config: UploaderConfig) {
   const initializeUploader = useCallback(() => {
     if (!uploaderRef.current) {
       const UploaderClass = config.provider === 'aws' ? AwsCore : ApexxCloudCore;
-      uploaderRef.current = new UploaderClass({ url: config.url });
+      uploaderRef.current = new UploaderClass();
     }
     return uploaderRef.current;
-  }, [config.provider, config.url]);
+  }, [config.provider]);
 
   const upload = useCallback(
     async (file: File, options: UploadOptions = {}) => {
@@ -57,7 +56,7 @@ export function useUploader(config: UploaderConfig) {
 
         // Fix the uploadMethod type issue
         const uploadMethod = options.multipart ? 'uploadMultipart' : 'uploadFile';
-
+        
         const response = await uploader.files[uploadMethod](
           file,
           config.getSignedUrl,
