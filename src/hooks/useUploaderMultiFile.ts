@@ -13,9 +13,9 @@ export interface UploadOptions {
   multipart?: boolean;
   partSize?: number;
   concurrency?: number;
-  onProgress?: (progressData: any) => void;
-  onComplete?: (response: any) => void;
-  onError?: (error: Error) => void;
+  onProgress?: (progressData: any, file: File) => void;
+  onComplete?: (response: any, file: File) => void;
+  onError?: (error: Error, file: File) => void;
   onStart?: (file: File) => void;
 }
 
@@ -25,6 +25,7 @@ export interface FileUploadState {
   progress: number;
   status: 'idle' | 'uploading' | 'completed' | 'error';
   error?: Error;
+  response?: any;
 }
 
 export interface UploadState {
@@ -54,7 +55,7 @@ export function useUploaderMultiFile(config: UploaderConfig) {
   const upload = useCallback(
     async (files: File[], options: UploadOptions = {}) => {
       const uploader = initializeUploader();
-      const responses: any[] = [];
+      const fileResponses: Record<string, any> = {};
 
       setUploadState(prev => ({
         files: files.reduce((acc, file) => ({
@@ -63,7 +64,8 @@ export function useUploaderMultiFile(config: UploaderConfig) {
             fileId: file.name,
             fileName: file.name,
             progress: 0,
-            status: 'idle'
+            status: 'idle',
+            response: null
           }
         }), {}),
         totalProgress: 0,
@@ -76,77 +78,98 @@ export function useUploaderMultiFile(config: UploaderConfig) {
 
           const method = options.multipart ? 'uploadMultipart' : 'upload';
           
-          const response = await uploader.files[method](file, config.getSignedUrl, {
-            ...options,
-            signal: abortControllersRef.current[file.name].signal,
-            onProgress: (progressData: any) => {
-              setUploadState(prev => {
-                const updatedFiles = {
-                  ...prev.files,
-                  [file.name]: {
-                    ...prev.files[file.name],
-                    progress: progressData.progress,
-                    status: 'uploading' as const
-                  }
-                };
-                
-                const totalProgress = Object.values(updatedFiles)
-                  .reduce((sum, file) => sum + file.progress, 0) / Object.keys(updatedFiles).length;
+          try {
+            const response = await uploader.files[method](file, config.getSignedUrl, {
+              ...options,
+              signal: abortControllersRef.current[file.name].signal,
+              onProgress: (progressData: any) => {
+                setUploadState(prev => {
+                  const updatedFiles = {
+                    ...prev.files,
+                    [file.name]: {
+                      ...prev.files[file.name],
+                      progress: progressData.progress,
+                      status: 'uploading' as const
+                    }
+                  };
+                  
+                  const totalProgress = calculateTotalProgress(updatedFiles);
 
-                return {
-                  files: updatedFiles,
-                  totalProgress,
-                  status: 'uploading'
-                };
-              });
-              options.onProgress?.(progressData);
-            },
-            onComplete: (response: any) => {
-              setUploadState(prev => {
-                const updatedFiles = {
-                  ...prev.files,
-                  [file.name]: {
-                    ...prev.files[file.name],
-                    progress: 100,
-                    status: 'completed' as const
-                  }
-                };
+                  return {
+                    files: updatedFiles,
+                    totalProgress,
+                    status: 'uploading'
+                  };
+                });
+                options.onProgress?.(progressData, file);
+              },
+              onComplete: (response: any) => {
+                fileResponses[file.name] = response;
+                setUploadState(prev => {
+                  const updatedFiles = {
+                    ...prev.files,
+                    [file.name]: {
+                      ...prev.files[file.name],
+                      progress: 100,
+                      status: 'completed' as const,
+                      response
+                    }
+                  };
 
-                const allCompleted = Object.values(updatedFiles)
-                  .every(file => file.status === 'completed');
+                  const allCompleted = Object.values(updatedFiles)
+                    .every(file => file.status === 'completed');
+                  const totalProgress = calculateTotalProgress(updatedFiles);
 
-                return {
-                  files: updatedFiles,
-                  totalProgress: allCompleted ? 100 : prev.totalProgress,
-                  status: allCompleted ? 'completed' : 'uploading'
-                };
-              });
-              options.onComplete?.(response);
-            },
-            onError: (error: any) => {
-              setUploadState(prev => ({
-                ...prev,
-                files: {
-                  ...prev.files,
-                  [file.name]: {
-                    ...prev.files[file.name],
-                    status: 'error',
-                    error: error.error || error
-                  }
-                },
-                status: 'error'
-              }));
-              options.onError?.(error.error || error);
-            },
-            onStart: () => {
-              options.onStart?.(file);
-            },
-          });
+                  return {
+                    files: updatedFiles,
+                    totalProgress,
+                    status: allCompleted ? 'completed' : 'uploading'
+                  };
+                });
+                options.onComplete?.(response, file);
+              },
+              onError: (error: any) => {
+                setUploadState(prev => {
+                  const updatedFiles = {
+                    ...prev.files,
+                    [file.name]: {
+                      ...prev.files[file.name],
+                      status: 'error' as const,
+                      error: error.error || error
+                    }
+                  };
 
-          responses.push(response);
+                  const hasInProgressFiles = Object.values(updatedFiles)
+                    .some(file => file.status === 'uploading');
+
+                  return {
+                    files: updatedFiles,
+                    totalProgress: calculateTotalProgress(updatedFiles),
+                    status: hasInProgressFiles ? 'uploading' : 'error'
+                  };
+                });
+                options.onError?.(error.error || error, file);
+              },
+              onStart: () => {
+                options.onStart?.(file);
+              },
+            });
+          } catch (error) {
+            setUploadState(prev => ({
+              ...prev,
+              files: {
+                ...prev.files,
+                [file.name]: {
+                  ...prev.files[file.name],
+                  status: 'error',
+                  error: error as Error
+                }
+              }
+            }));
+          }
         }
 
-        return responses;
+        return fileResponses;
       } catch (error) {
         setUploadState(prev => ({
           ...prev,
@@ -157,6 +180,17 @@ export function useUploaderMultiFile(config: UploaderConfig) {
     },
     [config, initializeUploader]
   );
+
+  const calculateTotalProgress = (files: Record<string, FileUploadState>) => {
+    const fileCount = Object.keys(files).length;
+    if (fileCount === 0) return 0;
+
+    const totalProgress = Object.values(files).reduce((sum, file) => {
+      return sum + (file.status === 'completed' ? 100 : file.progress);
+    }, 0);
+
+    return totalProgress / fileCount;
+  };
 
   const cancelUpload = useCallback((fileId?: string) => {
     if (fileId) {

@@ -116,5 +116,104 @@ function useUploader(config) {
     };
 }
 
-export { useUploader };
+function useUploaderMultiFile(config) {
+    const [uploadState, setUploadState] = useState({
+        files: {},
+        totalProgress: 0,
+        status: 'idle',
+    });
+    const abortControllersRef = useRef({});
+    const uploaderRef = useRef(null);
+    const initializeUploader = useCallback(() => {
+        if (!uploaderRef.current) {
+            const UploaderClass = config.provider === 'aws' ? AwsCore : ApexxCloudCore;
+            uploaderRef.current = new UploaderClass();
+        }
+        return uploaderRef.current;
+    }, [config.provider]);
+    const upload = useCallback((files_1, ...args_1) => __awaiter(this, [files_1, ...args_1], void 0, function* (files, options = {}) {
+        const uploader = initializeUploader();
+        const responses = [];
+        setUploadState(prev => ({
+            files: files.reduce((acc, file) => (Object.assign(Object.assign({}, acc), { [file.name]: {
+                    fileId: file.name,
+                    fileName: file.name,
+                    progress: 0,
+                    status: 'idle'
+                } })), {}),
+            totalProgress: 0,
+            status: 'uploading'
+        }));
+        try {
+            for (const file of files) {
+                abortControllersRef.current[file.name] = new AbortController();
+                const method = options.multipart ? 'uploadMultipart' : 'upload';
+                const response = yield uploader.files[method](file, config.getSignedUrl, Object.assign(Object.assign({}, options), { signal: abortControllersRef.current[file.name].signal, onProgress: (progressData) => {
+                        var _a;
+                        setUploadState(prev => {
+                            const updatedFiles = Object.assign(Object.assign({}, prev.files), { [file.name]: Object.assign(Object.assign({}, prev.files[file.name]), { progress: progressData.progress, status: 'uploading' }) });
+                            const totalProgress = Object.values(updatedFiles)
+                                .reduce((sum, file) => sum + file.progress, 0) / Object.keys(updatedFiles).length;
+                            return {
+                                files: updatedFiles,
+                                totalProgress,
+                                status: 'uploading'
+                            };
+                        });
+                        (_a = options.onProgress) === null || _a === void 0 ? void 0 : _a.call(options, progressData);
+                    }, onComplete: (response) => {
+                        var _a;
+                        setUploadState(prev => {
+                            const updatedFiles = Object.assign(Object.assign({}, prev.files), { [file.name]: Object.assign(Object.assign({}, prev.files[file.name]), { progress: 100, status: 'completed' }) });
+                            const allCompleted = Object.values(updatedFiles)
+                                .every(file => file.status === 'completed');
+                            return {
+                                files: updatedFiles,
+                                totalProgress: allCompleted ? 100 : prev.totalProgress,
+                                status: allCompleted ? 'completed' : 'uploading'
+                            };
+                        });
+                        (_a = options.onComplete) === null || _a === void 0 ? void 0 : _a.call(options, response);
+                    }, onError: (error) => {
+                        var _a;
+                        setUploadState(prev => (Object.assign(Object.assign({}, prev), { files: Object.assign(Object.assign({}, prev.files), { [file.name]: Object.assign(Object.assign({}, prev.files[file.name]), { status: 'error', error: error.error || error }) }), status: 'error' })));
+                        (_a = options.onError) === null || _a === void 0 ? void 0 : _a.call(options, error.error || error);
+                    }, onStart: () => {
+                        var _a;
+                        (_a = options.onStart) === null || _a === void 0 ? void 0 : _a.call(options, file);
+                    } }));
+                responses.push(response);
+            }
+            return responses;
+        }
+        catch (error) {
+            setUploadState(prev => (Object.assign(Object.assign({}, prev), { status: 'error' })));
+            throw error;
+        }
+    }), [config, initializeUploader]);
+    const cancelUpload = useCallback((fileId) => {
+        var _a;
+        if (fileId) {
+            (_a = abortControllersRef.current[fileId]) === null || _a === void 0 ? void 0 : _a.abort();
+            setUploadState(prev => (Object.assign(Object.assign({}, prev), { files: Object.assign(Object.assign({}, prev.files), { [fileId]: Object.assign(Object.assign({}, prev.files[fileId]), { progress: 0, status: 'idle' }) }) })));
+        }
+        else {
+            Object.values(abortControllersRef.current).forEach(controller => controller.abort());
+            setUploadState({
+                files: {},
+                totalProgress: 0,
+                status: 'idle'
+            });
+        }
+    }, []);
+    return {
+        upload,
+        cancelUpload,
+        files: uploadState.files,
+        totalProgress: uploadState.totalProgress,
+        status: uploadState.status,
+    };
+}
+
+export { useUploader, useUploaderMultiFile };
 //# sourceMappingURL=index.mjs.map
