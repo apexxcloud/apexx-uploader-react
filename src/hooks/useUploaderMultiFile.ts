@@ -145,6 +145,9 @@ export function useUploaderMultiFile(config: UploaderConfig) {
                 );
               },
               onError: (error: any) => {
+                if (!fileResponses[file.name]) {
+                  delete fileResponses[file.name];
+                }
                 setUploadState(prev => {
                   const updatedFiles = {
                     ...prev.files,
@@ -165,17 +168,15 @@ export function useUploaderMultiFile(config: UploaderConfig) {
                     status: hasInProgressFiles ? 'uploading' : 'error'
                   };
                 });
-                options.onError?.(
-                  error.error || error,
-                  file
-                );
+                options.onError?.(error.error || error, file);
               },
               onStart: () => {
                 options.onStart?.(file);
               },
             });
+            
             fileResponses[file.name] = response;
-            return response;
+            return { success: true, response };
           } catch (error) {
             const errorObj = error instanceof Error ? error : new Error('Upload failed');
             setUploadState(prev => ({
@@ -190,13 +191,17 @@ export function useUploaderMultiFile(config: UploaderConfig) {
               }
             }));
             options.onError?.(errorObj, file);
-            return fileResponses[file.name] || null;
+            return { success: false, response: fileResponses[file.name] };
           }
         });
 
         await Promise.allSettled(uploadPromises);
-        console.log("Upload completed final:", fileResponses);
-        return fileResponses;
+        const successfulResponses = Object.fromEntries(
+          Object.entries(fileResponses).filter(([_, response]) => response != null)
+        );
+        
+        console.log("Upload completed final:", successfulResponses);
+        return successfulResponses;
       } catch (error) {
         console.error("Upload failed:", error);
         return fileResponses;

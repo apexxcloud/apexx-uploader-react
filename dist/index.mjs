@@ -205,21 +205,16 @@ function useUploaderMultiFile(config) {
                     const errorObj = error instanceof Error ? error : new Error('Upload failed');
                     setUploadState(prev => (Object.assign(Object.assign({}, prev), { files: Object.assign(Object.assign({}, prev.files), { [file.name]: Object.assign(Object.assign({}, prev.files[file.name]), { status: 'error', error: errorObj }) }) })));
                     (_a = options.onError) === null || _a === void 0 ? void 0 : _a.call(options, errorObj, file);
-                    return null;
+                    return fileResponses[file.name] || null;
                 }
             }));
-            try {
-                yield Promise.allSettled(uploadPromises);
-            }
-            catch (error) {
-                console.error("Upload failed:", error);
-            }
-            console.log("Upload completed:", fileResponses);
+            yield Promise.allSettled(uploadPromises);
+            console.log("Upload completed final:", fileResponses);
             return fileResponses;
         }
         catch (error) {
-            setUploadState(prev => (Object.assign(Object.assign({}, prev), { status: 'error' })));
-            throw error;
+            console.error("Upload failed:", error);
+            return fileResponses;
         }
     }), [config, initializeUploader]);
     const calculateTotalProgress = (files) => {
