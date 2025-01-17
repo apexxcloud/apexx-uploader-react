@@ -1,0 +1,67 @@
+{
+  "name": "apexx-uploader-react",
+  "version": "1.0.0",
+  "description": "React hooks for Apexx Cloud Uploader",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "type": "module",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "types"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "clean": "rimraf dist",
+    "prepare": "npm run clean && npm run build"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "dependencies": {
+    "apexx-uploader-core": "^1.0.36",
+    "clsx": "^2.1.1",
+    "react-dropzone": "^14.3.5",
+    "rollup-plugin-postcss": "^4.0.2"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.8",
+    "@rollup/plugin-node-resolve": "^15.3.1",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@types/react": "^18.3.18",
+    "postcss": "^8.4.49",
+    "rimraf": "^6.0.1",
+    "rollup": "^3.29.5",
+    "rollup-plugin-copy": "^3.5.0",
+    "rollup-plugin-css-only": "^4.5.2",
+    "rollup-plugin-dts": "^6.1.1",
+    "tslib": "^2.8.1",
+    "typescript": "^5.7.2"
+  },
+  "keywords": [
+    "react",
+    "apexx uploader",
+    "storage",
+    "upload"
+  ],
+  "author": "ApexxCloud <team@apexxcloud.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/apexxcloud/apexx-uploader-react"
+  },
+  "homepage": "https://github.com/apexxcloud/apexx-uploader-react#readme",
+  "bugs": {
+    "url": "https://github.com/apexxcloud/apexx-uploader-react/issues"
+  }
+}
