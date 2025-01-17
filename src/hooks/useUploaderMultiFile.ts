@@ -199,6 +199,7 @@ export function useUploaderMultiFile(config: UploaderConfig) {
         } catch (error) {
           console.error("Upload failed:", error);
         }
+        console.log("Upload completed:", fileResponses);
         return fileResponses;
       } catch (error) {
         setUploadState(prev => ({

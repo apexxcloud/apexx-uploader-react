@@ -208,7 +208,12 @@ function useUploaderMultiFile(config) {
                     return null;
                 }
             }));
-            yield Promise.allSettled(uploadPromises);
+            try {
+                yield Promise.allSettled(uploadPromises);
+            }
+            catch (error) {
+                console.error("Upload failed:", error);
+            }
             return fileResponses;
         }
         catch (error) {
