@@ -167,8 +167,10 @@ function useUploaderMultiFile(config) {
                             fileResponses[file.name] = response;
                             setUploadState(prev => {
                                 const updatedFiles = Object.assign(Object.assign({}, prev.files), { [file.name]: Object.assign(Object.assign({}, prev.files[file.name]), { progress: 100, status: 'completed', response }) });
-                                const allCompleted = Object.values(updatedFiles)
-                                    .every(file => file.status === 'completed');
+                                const activeFiles = Object.values(updatedFiles)
+                                    .filter(file => file.status !== 'error');
+                                const allCompleted = activeFiles.length > 0 &&
+                                    activeFiles.every(file => file.status === 'completed');
                                 const totalProgress = calculateTotalProgress(updatedFiles);
                                 return {
                                     files: updatedFiles,

@@ -179,6 +179,7 @@ export function useUploaderMultiFile(config: UploaderConfig) {
                 options.onStart?.(file);
               },
             });
+            fileResponses[file.name] = response;
             return response;
           } catch (error) {
             setUploadState(prev => ({
@@ -192,11 +193,11 @@ export function useUploaderMultiFile(config: UploaderConfig) {
                 }
               }
             }));
-            throw error;
+            return null;
           }
         });
 
-        await Promise.all(uploadPromises);
+        await Promise.allSettled(uploadPromises);
         return fileResponses;
       } catch (error) {
         setUploadState(prev => ({
