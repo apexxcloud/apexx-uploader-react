@@ -214,6 +214,7 @@ function useUploaderMultiFile(config) {
             catch (error) {
                 console.error("Upload failed:", error);
             }
+            console.log("Upload completed:", fileResponses);
             return fileResponses;
         }
         catch (error) {
