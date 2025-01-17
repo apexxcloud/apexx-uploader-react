@@ -145,9 +145,6 @@ export function useUploaderMultiFile(config: UploaderConfig) {
                 );
               },
               onError: (error: any) => {
-                if (!fileResponses[file.name]) {
-                  delete fileResponses[file.name];
-                }
                 setUploadState(prev => {
                   const updatedFiles = {
                     ...prev.files,
@@ -168,16 +165,20 @@ export function useUploaderMultiFile(config: UploaderConfig) {
                     status: hasInProgressFiles ? 'uploading' : 'error'
                   };
                 });
-                options.onError?.(error.error || error, file);
+                options.onError?.(
+                  error.error || error,
+                  file
+                );
               },
               onStart: () => {
                 options.onStart?.(file);
               },
             });
-            
+
             fileResponses[file.name] = response;
-            return { success: true, response };
+            return response;
           } catch (error) {
+            console.log("Upload failed:", error);
             const errorObj = error instanceof Error ? error : new Error('Upload failed');
             setUploadState(prev => ({
               ...prev,
@@ -191,17 +192,13 @@ export function useUploaderMultiFile(config: UploaderConfig) {
               }
             }));
             options.onError?.(errorObj, file);
-            return { success: false, response: fileResponses[file.name] };
+            return fileResponses[file.name] || null;
           }
         });
 
         await Promise.allSettled(uploadPromises);
-        const successfulResponses = Object.fromEntries(
-          Object.entries(fileResponses).filter(([_, response]) => response != null)
-        );
-        
-        console.log("Upload completed final:", successfulResponses);
-        return successfulResponses;
+        console.log("Upload completed final:", fileResponses);
+        return fileResponses;
       } catch (error) {
         console.error("Upload failed:", error);
         return fileResponses;
