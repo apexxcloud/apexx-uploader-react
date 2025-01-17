@@ -10,25 +10,23 @@ export interface UploaderConfig {
 
 export interface UploadOptions {
   key?: string;
-  maxSize?: number;
-  acceptedFileTypes?: string[];
   multipart?: boolean;
   partSize?: number;
   concurrency?: number;
-  onProgress?: (progress: ProgressEvent) => void;
+  onProgress?: (progressData: any) => void;
   onComplete?: (response: any) => void;
   onError?: (error: Error) => void;
   onStart?: (file: File) => void;
 }
 
-interface FileUploadState {
+export interface UploadState {
   progress: number;
   status: 'idle' | 'uploading' | 'completed' | 'error';
   error?: Error;
 }
 
 export function useUploader(config: UploaderConfig) {
-  const [uploadState, setUploadState] = useState<FileUploadState>({
+  const [uploadState, setUploadState] = useState<UploadState>({
     progress: 0,
     status: 'idle',
   });
@@ -36,7 +34,6 @@ export function useUploader(config: UploaderConfig) {
   const abortControllerRef = useRef<AbortController | null>(null);
   const uploaderRef = useRef<ApexxCloudCore | AwsCore | null>(null);
 
-  // Initialize the uploader based on provider
   const initializeUploader = useCallback(() => {
     if (!uploaderRef.current) {
       const UploaderClass = config.provider === 'aws' ? AwsCore : ApexxCloudCore;
@@ -51,47 +48,41 @@ export function useUploader(config: UploaderConfig) {
         const uploader = initializeUploader();
         setUploadState({ progress: 0, status: 'uploading' });
 
-        // Create new AbortController for this upload
         abortControllerRef.current = new AbortController();
 
-        // Fix the uploadMethod type issue
-        const uploadMethod = options.multipart ? 'uploadMultipart' : 'uploadFile';
-        
-        const response = await uploader.files[uploadMethod](
-          file,
-          config.getSignedUrl,
-          {
-            key: options.key,
-            partSize: options.partSize,
-            concurrency: options.concurrency,
-            signal: abortControllerRef.current.signal,
-            onProgress: (progressData: any) => {
-              setUploadState({
-                progress: progressData.progress,
-                status: 'uploading',
-              });
-              options.onProgress?.(progressData);
-            },
-            onComplete: (response: any) => {
-              setUploadState({
-                progress: 100,
-                status: 'completed',
-              });
-              options.onComplete?.(response);
-            },
-            onError: (error: any) => {
-              setUploadState({
-                progress: 0,
-                status: 'error',
-                error: error.error,
-              });
-              options.onError?.(error.error);
-            },
-            onStart: () => {
-              options.onStart?.(file);
-            },
-          }
-        );
+        const method = options.multipart ? 'uploadMultipart' : 'upload';
+     
+        const response = await uploader.files[method](file, config.getSignedUrl, {
+          key: options.key,
+          partSize: options.partSize,
+          concurrency: options.concurrency,
+          signal: abortControllerRef.current.signal,
+          onProgress: (progressData: any) => {
+            setUploadState({
+              progress: progressData.progress,
+              status: 'uploading',
+            });
+            options.onProgress?.(progressData);
+          },
+          onComplete: (response: any) => {
+            setUploadState({
+              progress: 100,
+              status: 'completed',
+            });
+            options.onComplete?.(response);
+          },
+          onError: (error: any) => {
+            setUploadState({
+              progress: 0,
+              status: 'error',
+              error: error.error || error,
+            });
+            options.onError?.(error.error || error);
+          },
+          onStart: () => {
+            options.onStart?.(file);
+          },
+        });
 
         return response;
       } catch (error) {

@@ -46,10 +46,10 @@ function useUploader(config) {
     const initializeUploader = react.useCallback(() => {
         if (!uploaderRef.current) {
             const UploaderClass = config.provider === 'aws' ? apexxUploaderCore.AwsCore : apexxUploaderCore.ApexxCloudCore;
-            uploaderRef.current = new UploaderClass({ url: config.url });
+            uploaderRef.current = new UploaderClass();
         }
         return uploaderRef.current;
-    }, [config.provider, config.url]);
+    }, [config.provider]);
     const upload = react.useCallback((file_1, ...args_1) => __awaiter(this, [file_1, ...args_1], void 0, function* (file, options = {}) {
         try {
             const uploader = initializeUploader();

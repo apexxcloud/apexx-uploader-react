@@ -1,7 +1,6 @@
 export type Provider = 'aws' | 'apexx';
 export interface UploaderConfig {
     provider: Provider;
-    url: string;
     getSignedUrl: (operation: string, params: Record<string, any>) => Promise<string>;
 }
 export interface UploadOptions {
