@@ -243,6 +243,34 @@ export function useUploaderMultiFile(config: UploaderConfig) {
     }
   }, []);
 
+  const cancelFileUpload = useCallback((fileName: string) => {
+    const controller = abortControllersRef.current[fileName];
+    if (controller) {
+      controller.abort();
+      delete abortControllersRef.current[fileName];
+
+      setUploadState(prev => {
+        const updatedFiles = {
+          ...prev.files,
+          [fileName]: {
+            ...prev.files[fileName],
+            status: 'error' as const,
+            error: new Error('Upload cancelled')
+          }
+        };
+
+        const hasInProgressFiles = Object.values(updatedFiles)
+          .some(file => file.status === 'uploading');
+
+        return {
+          files: updatedFiles,
+          totalProgress: calculateTotalProgress(updatedFiles),
+          status: hasInProgressFiles ? 'uploading' : 'error'
+        };
+      });
+    }
+  }, []);
+
   const reset = useCallback(() => {
     setUploadState({
       files: {},
@@ -254,6 +282,7 @@ export function useUploaderMultiFile(config: UploaderConfig) {
   return {
     upload,
     cancelUpload,
+    cancelFileUpload,
     reset,
     files: uploadState.files,
     totalProgress: uploadState.totalProgress,
