@@ -8,9 +8,9 @@ export interface UploadOptions {
     multipart?: boolean;
     partSize?: number;
     concurrency?: number;
-    onProgress?: (progressData: any) => void;
-    onComplete?: (response: any) => void;
-    onError?: (error: Error) => void;
+    onProgress?: (progressData: any, file: File) => void;
+    onComplete?: (response: any, file: File) => void;
+    onError?: (error: Error, file: File) => void;
     onStart?: (file: File) => void;
 }
 export interface FileUploadState {
@@ -19,6 +19,7 @@ export interface FileUploadState {
     progress: number;
     status: 'idle' | 'uploading' | 'completed' | 'error';
     error?: Error;
+    response?: any;
 }
 export interface UploadState {
     files: Record<string, FileUploadState>;
@@ -26,7 +27,7 @@ export interface UploadState {
     status: 'idle' | 'uploading' | 'completed' | 'error';
 }
 export declare function useUploaderMultiFile(config: UploaderConfig): {
-    upload: (files: File[], options?: UploadOptions) => Promise<any[]>;
+    upload: (files: File[], options?: UploadOptions) => Promise<Record<string, any>>;
     cancelUpload: (fileId?: string) => void;
     files: Record<string, FileUploadState>;
     totalProgress: number;
