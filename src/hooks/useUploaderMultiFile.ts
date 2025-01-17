@@ -92,8 +92,7 @@ export function useUploaderMultiFile(config: UploaderConfig) {
                     }
                   };
                   
-                  const totalProgress = Object.values(updatedFiles).reduce((sum, fileState) => 
-                    sum + fileState.progress, 0) / files.length;
+                  const totalProgress = calculateTotalProgress(updatedFiles);
 
                   return {
                     files: updatedFiles,
@@ -125,8 +124,8 @@ export function useUploaderMultiFile(config: UploaderConfig) {
 
                   const allCompleted = Object.values(updatedFiles)
                     .every(file => file.status === 'completed');
-                  const totalProgress = Object.values(updatedFiles).reduce((sum, fileState) => 
-                    sum + fileState.progress, 0) / files.length;
+                  
+                  const totalProgress = calculateTotalProgress(updatedFiles);
 
                   return {
                     files: updatedFiles,
