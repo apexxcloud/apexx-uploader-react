@@ -5,15 +5,18 @@ export interface UploaderConfig {
 }
 export interface UploadOptions {
     key?: string;
-    maxSize?: number;
-    acceptedFileTypes?: string[];
     multipart?: boolean;
     partSize?: number;
     concurrency?: number;
-    onProgress?: (progress: ProgressEvent) => void;
+    onProgress?: (progressData: any) => void;
     onComplete?: (response: any) => void;
     onError?: (error: Error) => void;
     onStart?: (file: File) => void;
+}
+export interface UploadState {
+    progress: number;
+    status: 'idle' | 'uploading' | 'completed' | 'error';
+    error?: Error;
 }
 export declare function useUploader(config: UploaderConfig): {
     upload: (file: File, options?: UploadOptions) => Promise<any>;

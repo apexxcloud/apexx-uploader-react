@@ -40,7 +40,6 @@ function useUploader(config) {
     });
     const abortControllerRef = useRef(null);
     const uploaderRef = useRef(null);
-    // Initialize the uploader based on provider
     const initializeUploader = useCallback(() => {
         if (!uploaderRef.current) {
             const UploaderClass = config.provider === 'aws' ? AwsCore : ApexxCloudCore;
@@ -52,11 +51,9 @@ function useUploader(config) {
         try {
             const uploader = initializeUploader();
             setUploadState({ progress: 0, status: 'uploading' });
-            // Create new AbortController for this upload
             abortControllerRef.current = new AbortController();
-            // Fix the uploadMethod type issue
-            const uploadMethod = options.multipart ? 'uploadMultipart' : 'uploadFile';
-            const response = yield uploader.files[uploadMethod](file, config.getSignedUrl, {
+            const method = options.multipart ? 'uploadMultipart' : 'upload';
+            const response = yield uploader.files[method](file, config.getSignedUrl, {
                 key: options.key,
                 partSize: options.partSize,
                 concurrency: options.concurrency,
@@ -82,9 +79,9 @@ function useUploader(config) {
                     setUploadState({
                         progress: 0,
                         status: 'error',
-                        error: error.error,
+                        error: error.error || error,
                     });
-                    (_a = options.onError) === null || _a === void 0 ? void 0 : _a.call(options, error.error);
+                    (_a = options.onError) === null || _a === void 0 ? void 0 : _a.call(options, error.error || error);
                 },
                 onStart: () => {
                     var _a;
