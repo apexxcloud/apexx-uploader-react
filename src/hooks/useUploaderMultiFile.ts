@@ -194,7 +194,11 @@ export function useUploaderMultiFile(config: UploaderConfig) {
           }
         });
 
-        await Promise.allSettled(uploadPromises);
+        try {
+          await Promise.allSettled(uploadPromises);
+        } catch (error) {
+          console.error("Upload failed:", error);
+        }
         return fileResponses;
       } catch (error) {
         setUploadState(prev => ({

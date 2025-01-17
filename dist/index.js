@@ -149,6 +149,7 @@ function useUploaderMultiFile(config) {
         }));
         try {
             const uploadPromises = files.map((file) => __awaiter(this, void 0, void 0, function* () {
+                var _a;
                 abortControllersRef.current[file.name] = new AbortController();
                 const method = options.multipart ? 'uploadMultipart' : 'upload';
                 try {
@@ -187,14 +188,14 @@ function useUploaderMultiFile(config) {
                                 const updatedFiles = Object.assign(Object.assign({}, prev.files), { [file.name]: Object.assign(Object.assign({}, prev.files[file.name]), { status: 'error', error: error.error || error }) });
                                 const hasInProgressFiles = Object.values(updatedFiles)
                                     .some(file => file.status === 'uploading');
-                                const totalProgress = Object.values(updatedFiles).reduce((sum, fileState) => sum + (fileState.status === 'completed' ? 100 : fileState.progress), 0) / files.length;
+                                const totalProgress = calculateTotalProgress(updatedFiles);
                                 return {
                                     files: updatedFiles,
                                     totalProgress,
                                     status: hasInProgressFiles ? 'uploading' : 'error'
                                 };
                             });
-                            (_a = options.onError) === null || _a === void 0 ? void 0 : _a.call(options, Object.assign(Object.assign({}, (error.error || error)), { fileName: file.name, fileId: file.name }), file);
+                            (_a = options.onError) === null || _a === void 0 ? void 0 : _a.call(options, error.error || error, file);
                         }, onStart: () => {
                             var _a;
                             (_a = options.onStart) === null || _a === void 0 ? void 0 : _a.call(options, file);
@@ -203,7 +204,9 @@ function useUploaderMultiFile(config) {
                     return response;
                 }
                 catch (error) {
-                    setUploadState(prev => (Object.assign(Object.assign({}, prev), { files: Object.assign(Object.assign({}, prev.files), { [file.name]: Object.assign(Object.assign({}, prev.files[file.name]), { status: 'error', error: error }) }) })));
+                    const errorObj = error instanceof Error ? error : new Error('Upload failed');
+                    setUploadState(prev => (Object.assign(Object.assign({}, prev), { files: Object.assign(Object.assign({}, prev.files), { [file.name]: Object.assign(Object.assign({}, prev.files[file.name]), { status: 'error', error: errorObj }) }) })));
+                    (_a = options.onError) === null || _a === void 0 ? void 0 : _a.call(options, errorObj, file);
                     return null;
                 }
             }));
