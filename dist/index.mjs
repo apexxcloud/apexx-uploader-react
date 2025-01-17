@@ -197,14 +197,15 @@ function useUploaderMultiFile(config) {
                             var _a;
                             (_a = options.onStart) === null || _a === void 0 ? void 0 : _a.call(options, file);
                         } }));
+                    fileResponses[file.name] = response;
                     return response;
                 }
                 catch (error) {
                     setUploadState(prev => (Object.assign(Object.assign({}, prev), { files: Object.assign(Object.assign({}, prev.files), { [file.name]: Object.assign(Object.assign({}, prev.files[file.name]), { status: 'error', error: error }) }) })));
-                    throw error;
+                    return null;
                 }
             }));
-            yield Promise.all(uploadPromises);
+            yield Promise.allSettled(uploadPromises);
             return fileResponses;
         }
         catch (error) {

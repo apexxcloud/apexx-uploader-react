@@ -157,8 +157,7 @@ export function useUploaderMultiFile(config: UploaderConfig) {
 
                   const hasInProgressFiles = Object.values(updatedFiles)
                     .some(file => file.status === 'uploading');
-                  const totalProgress = Object.values(updatedFiles).reduce((sum, fileState) => 
-                    sum + (fileState.status === 'completed' ? 100 : fileState.progress), 0) / files.length;
+                  const totalProgress = calculateTotalProgress(updatedFiles);
 
                   return {
                     files: updatedFiles,
@@ -167,11 +166,7 @@ export function useUploaderMultiFile(config: UploaderConfig) {
                   };
                 });
                 options.onError?.(
-                  {
-                    ...(error.error || error),
-                    fileName: file.name,
-                    fileId: file.name
-                  },
+                  error.error || error,
                   file
                 );
               },
@@ -182,6 +177,7 @@ export function useUploaderMultiFile(config: UploaderConfig) {
             fileResponses[file.name] = response;
             return response;
           } catch (error) {
+            const errorObj = error instanceof Error ? error : new Error('Upload failed');
             setUploadState(prev => ({
               ...prev,
               files: {
@@ -189,10 +185,11 @@ export function useUploaderMultiFile(config: UploaderConfig) {
                 [file.name]: {
                   ...prev.files[file.name],
                   status: 'error',
-                  error: error as Error
+                  error: errorObj
                 }
               }
             }));
+            options.onError?.(errorObj, file);
             return null;
           }
         });
