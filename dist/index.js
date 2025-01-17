@@ -212,6 +212,15 @@ function useUploaderMultiFile(config) {
             throw error;
         }
     }), [config, initializeUploader]);
+    const calculateTotalProgress = (files) => {
+        const fileCount = Object.keys(files).length;
+        if (fileCount === 0)
+            return 0;
+        const totalProgress = Object.values(files).reduce((sum, file) => {
+            return sum + (file.status === 'completed' ? 100 : file.progress);
+        }, 0);
+        return totalProgress / fileCount;
+    };
     const cancelUpload = react.useCallback((fileId) => {
         var _a;
         if (fileId) {
@@ -227,6 +236,23 @@ function useUploaderMultiFile(config) {
             });
         }
     }, []);
+    const cancelFileUpload = react.useCallback((fileName) => {
+        const controller = abortControllersRef.current[fileName];
+        if (controller) {
+            controller.abort();
+            delete abortControllersRef.current[fileName];
+            setUploadState(prev => {
+                const updatedFiles = Object.assign(Object.assign({}, prev.files), { [fileName]: Object.assign(Object.assign({}, prev.files[fileName]), { status: 'error', error: new Error('Upload cancelled') }) });
+                const hasInProgressFiles = Object.values(updatedFiles)
+                    .some(file => file.status === 'uploading');
+                return {
+                    files: updatedFiles,
+                    totalProgress: calculateTotalProgress(updatedFiles),
+                    status: hasInProgressFiles ? 'uploading' : 'error'
+                };
+            });
+        }
+    }, []);
     const reset = react.useCallback(() => {
         setUploadState({
             files: {},
@@ -237,6 +263,7 @@ function useUploaderMultiFile(config) {
     return {
         upload,
         cancelUpload,
+        cancelFileUpload,
         reset,
         files: uploadState.files,
         totalProgress: uploadState.totalProgress,
