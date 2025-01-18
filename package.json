@@ -29,7 +29,7 @@
     "react-dom": "^18.2.0"
   },
   "dependencies": {
-    "apexx-uploader-core": "^1.0.56",
+    "apexx-uploader-core": "^1.0.58",
     "clsx": "^2.1.1",
     "react-dropzone": "^14.3.5",
     "rollup-plugin-postcss": "^4.0.2"
