@@ -219,7 +219,6 @@ function useUploaderMultiFile(config) {
         }
         catch (error) {
             setUploadState(prev => (Object.assign(Object.assign({}, prev), { status: 'error' })));
-            throw error;
         }
     }), [config, initializeUploader]);
     const calculateTotalProgress = (files) => {

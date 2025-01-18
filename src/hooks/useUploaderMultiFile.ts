@@ -34,7 +34,7 @@ export interface UploadState {
   status: 'idle' | 'uploading' | 'completed' | 'error';
 }
 
-export function useUploaderMultiFile(config: UploaderConfig) {
+export function useUploader(config: UploaderConfig) {
   const [uploadState, setUploadState] = useState<UploadState>({
     files: {},
     totalProgress: 0,
@@ -56,7 +56,7 @@ export function useUploaderMultiFile(config: UploaderConfig) {
     async (files: File[], options: UploadOptions = {}) => {
       const uploader = initializeUploader();
       const fileResponses: Record<string, any> = {};
-
+      const errorFiles: Record<string, Error> = {};
       setUploadState(prev => ({
         files: files.reduce((acc, file) => ({
           ...acc,
@@ -156,6 +156,8 @@ export function useUploaderMultiFile(config: UploaderConfig) {
                       error: error.error || error
                     }
                   };
+
+                  errorFiles[file.name] = error.error || error;
 
                   const hasInProgressFiles = Object.values(updatedFiles)
                     .some(file => file.status === 'uploading');
