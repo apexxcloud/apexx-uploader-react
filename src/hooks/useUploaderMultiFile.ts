@@ -191,18 +191,22 @@ export function useUploaderMultiFile(config: UploaderConfig) {
               }
             }));
             options.onError?.(errorObj, file);
+            if (error instanceof Error && error.name === 'AbortError') {
+              return fileResponses[file.name] || null;
+            }
             return null;
           }
         });
 
-        try {
-          await Promise.allSettled(uploadPromises);
-          console.log("Upload done", fileResponses)
-        } catch (error) {
-          console.error("Upload done error:", error);
-        }
-        return fileResponses;
+        await Promise.allSettled(uploadPromises);
+        
+        const successfulResponses = Object.fromEntries(
+          Object.entries(fileResponses).filter(([_, response]) => response != null)
+        );
+        
+        return successfulResponses;
       } catch (error) {
+        console.error("OuterPromise error:", error);
         setUploadState(prev => ({
           ...prev,
           status: 'error'

@@ -213,9 +213,10 @@ function useUploaderMultiFile(config) {
             }));
             try {
                 yield Promise.allSettled(uploadPromises);
+                console.log("Upload done", fileResponses);
             }
             catch (error) {
-                console.error("Upload failed:", error);
+                console.error("Upload done error:", error);
             }
             return fileResponses;
         }
