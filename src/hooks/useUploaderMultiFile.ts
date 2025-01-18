@@ -145,6 +145,7 @@ export function useUploaderMultiFile(config: UploaderConfig) {
                 );
               },
               onError: (error: any) => {
+                console.log("Inner promise callback error", error)
                 setUploadState(prev => {
                   const updatedFiles = {
                     ...prev.files,
@@ -175,6 +176,7 @@ export function useUploaderMultiFile(config: UploaderConfig) {
               },
             });
             fileResponses[file.name] = response;
+            console.log("Inner promise response", response)
             return response;
           } catch (error) {
             console.log("Innner promise error", error)

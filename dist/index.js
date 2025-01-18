@@ -208,19 +208,18 @@ function useUploaderMultiFile(config) {
                     const errorObj = error instanceof Error ? error : new Error('Upload failed');
                     setUploadState(prev => (Object.assign(Object.assign({}, prev), { files: Object.assign(Object.assign({}, prev.files), { [file.name]: Object.assign(Object.assign({}, prev.files[file.name]), { status: 'error', error: errorObj }) }) })));
                     (_a = options.onError) === null || _a === void 0 ? void 0 : _a.call(options, errorObj, file);
+                    if (error instanceof Error && error.name === 'AbortError') {
+                        return fileResponses[file.name] || null;
+                    }
                     return null;
                 }
             }));
-            try {
-                yield Promise.allSettled(uploadPromises);
-                console.log("Upload done", fileResponses);
-            }
-            catch (error) {
-                console.error("Upload done error:", error);
-            }
-            return fileResponses;
+            yield Promise.allSettled(uploadPromises);
+            const successfulResponses = Object.fromEntries(Object.entries(fileResponses).filter(([_, response]) => response != null));
+            return successfulResponses;
         }
         catch (error) {
+            console.error("OuterPromise error:", error);
             setUploadState(prev => (Object.assign(Object.assign({}, prev), { status: 'error' })));
         }
     }), [config, initializeUploader]);
