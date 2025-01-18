@@ -195,7 +195,7 @@ export function useUploaderMultiFile(config: UploaderConfig) {
             return fileResponses[file.name] || null;
           }
         });
-
+        console.log("Uploade started")
         await Promise.allSettled(uploadPromises);
         console.log("Upload completed final:", fileResponses);
         return fileResponses;
