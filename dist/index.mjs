@@ -209,6 +209,7 @@ function useUploaderMultiFile(config) {
                     return fileResponses[file.name] || null;
                 }
             }));
+            console.log("Uploade started");
             yield Promise.allSettled(uploadPromises);
             console.log("Upload completed final:", fileResponses);
             return fileResponses;
