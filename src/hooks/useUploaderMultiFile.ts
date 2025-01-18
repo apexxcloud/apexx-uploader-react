@@ -111,6 +111,7 @@ export function useUploaderMultiFile(config: UploaderConfig) {
               },
               onComplete: (response: any) => {
                 fileResponses[file.name] = response;
+                console.log("Inner promise complete for file", file.name, response)
                 setUploadState(prev => {
                   const updatedFiles = {
                     ...prev.files,
