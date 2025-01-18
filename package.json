@@ -1,6 +1,6 @@
 {
   "name": "apexx-uploader-react",
-  "version": "1.0.38",
+  "version": "1.0.39",
   "description": "React hooks for Apexx Cloud Uploader",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
