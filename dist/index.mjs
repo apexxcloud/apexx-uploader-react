@@ -182,6 +182,7 @@ function useUploaderMultiFile(config) {
                             (_a = options.onComplete) === null || _a === void 0 ? void 0 : _a.call(options, Object.assign(Object.assign({}, response), { fileName: file.name, fileId: file.name }), file);
                         }, onError: (error) => {
                             var _a;
+                            console.log("Inner promise callback error", error);
                             setUploadState(prev => {
                                 const updatedFiles = Object.assign(Object.assign({}, prev.files), { [file.name]: Object.assign(Object.assign({}, prev.files[file.name]), { status: 'error', error: error.error || error }) });
                                 const hasInProgressFiles = Object.values(updatedFiles)
@@ -199,6 +200,7 @@ function useUploaderMultiFile(config) {
                             (_a = options.onStart) === null || _a === void 0 ? void 0 : _a.call(options, file);
                         } }));
                     fileResponses[file.name] = response;
+                    console.log("Inner promise response", response);
                     return response;
                 }
                 catch (error) {
