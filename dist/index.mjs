@@ -166,6 +166,7 @@ function useUploaderMultiFile(config) {
                         }, onComplete: (response) => {
                             var _a;
                             fileResponses[file.name] = response;
+                            console.log("Inner promise complete for file", file.name, response);
                             setUploadState(prev => {
                                 const updatedFiles = Object.assign(Object.assign({}, prev.files), { [file.name]: Object.assign(Object.assign({}, prev.files[file.name]), { progress: 100, status: 'completed', response }) });
                                 const activeFiles = Object.values(updatedFiles)
