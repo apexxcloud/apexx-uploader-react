@@ -177,6 +177,7 @@ export function useUploaderMultiFile(config: UploaderConfig) {
             fileResponses[file.name] = response;
             return response;
           } catch (error) {
+            console.log("Innner promise error", error)
             const errorObj = error instanceof Error ? error : new Error('Upload failed');
             setUploadState(prev => ({
               ...prev,
