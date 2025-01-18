@@ -27,9 +27,7 @@ export interface UploadState {
     status: 'idle' | 'uploading' | 'completed' | 'error';
 }
 export declare function useUploaderMultiFile(config: UploaderConfig): {
-    upload: (files: File[], options?: UploadOptions) => Promise<{
-        [k: string]: any;
-    } | undefined>;
+    upload: (files: File[], options?: UploadOptions) => Promise<Record<string, any>>;
     cancelUpload: (fileId?: string) => void;
     cancelFileUpload: (fileName: string) => void;
     reset: () => void;
