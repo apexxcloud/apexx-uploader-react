@@ -77,126 +77,108 @@ export function useUploaderMultiFile(config: UploaderConfig) {
           abortControllersRef.current[file.name] = new AbortController();
           const method = options.multipart ? 'uploadMultipart' : 'upload';
 
-          try {
-            const response = await uploader.files[method](file, config.getSignedUrl, {
-              ...options,
-              signal: abortControllersRef.current[file.name].signal,
-              onProgress: (progressData: any) => {
-                setUploadState(prev => {
-                  const updatedFiles = {
-                    ...prev.files,
-                    [file.name]: {
-                      ...prev.files[file.name],
-                      progress: progressData.progress,
-                      status: 'uploading' as const
-                    }
-                  };
-                  
-                  const totalProgress = calculateTotalProgress(updatedFiles);
+          const response = await uploader.files[method](file, config.getSignedUrl, {
+            ...options,
+            signal: abortControllersRef.current[file.name].signal,
+            onProgress: (progressData: any) => {
+              setUploadState(prev => {
+                const updatedFiles = {
+                  ...prev.files,
+                  [file.name]: {
+                    ...prev.files[file.name],
+                    progress: progressData.progress,
+                    status: 'uploading' as const
+                  }
+                };
+                
+                const totalProgress = calculateTotalProgress(updatedFiles);
 
-                  return {
-                    files: updatedFiles,
-                    totalProgress,
-                    status: 'uploading'
-                  };
-                });
-                options.onProgress?.(
-                  { 
-                    ...progressData,
-                    fileName: file.name,
-                    fileId: file.name
-                  }, 
-                  file
-                );
-              },
-              onComplete: (response: any) => {
-                fileResponses[file.name] = response;
-                setUploadState(prev => {
-                  const updatedFiles = {
-                    ...prev.files,
-                    [file.name]: {
-                      ...prev.files[file.name],
-                      progress: 100,
-                      status: 'completed' as const,
-                      response
-                    }
-                  };
+                return {
+                  files: updatedFiles,
+                  totalProgress,
+                  status: 'uploading'
+                };
+              });
+              options.onProgress?.(
+                { 
+                  ...progressData,
+                  fileName: file.name,
+                  fileId: file.name
+                }, 
+                file
+              );
+            },
+            onComplete: (response: any) => {
+              fileResponses[file.name] = response;
+              setUploadState(prev => {
+                const updatedFiles = {
+                  ...prev.files,
+                  [file.name]: {
+                    ...prev.files[file.name],
+                    progress: 100,
+                    status: 'completed' as const,
+                    response
+                  }
+                };
 
-                  const activeFiles = Object.values(updatedFiles)
-                    .filter(file => file.status !== 'error');
-                  const allCompleted = activeFiles.length > 0 && 
-                    activeFiles.every(file => file.status === 'completed');
-                  
-                  const totalProgress = calculateTotalProgress(updatedFiles);
+                const activeFiles = Object.values(updatedFiles)
+                  .filter(file => file.status !== 'error');
+                const allCompleted = activeFiles.length > 0 && 
+                  activeFiles.every(file => file.status === 'completed');
+                
+                const totalProgress = calculateTotalProgress(updatedFiles);
 
-                  return {
-                    files: updatedFiles,
-                    totalProgress,
-                    status: allCompleted ? 'completed' : 'uploading'
-                  };
-                });
-                options.onComplete?.(
-                  { 
-                    ...response,
-                    fileName: file.name,
-                    fileId: file.name
-                  }, 
-                  file
-                );
-              },
-              onError: (error: any) => {
-                setUploadState(prev => {
-                  const updatedFiles = {
-                    ...prev.files,
-                    [file.name]: {
-                      ...prev.files[file.name],
-                      status: 'error' as const,
-                      error: error.error || error
-                    }
-                  };
+                return {
+                  files: updatedFiles,
+                  totalProgress,
+                  status: allCompleted ? 'completed' : 'uploading'
+                };
+              });
+              options.onComplete?.(
+                { 
+                  ...response,
+                  fileName: file.name,
+                  fileId: file.name
+                }, 
+                file
+              );
+            },
+            onError: (error: any) => {
+              setUploadState(prev => {
+                const updatedFiles = {
+                  ...prev.files,
+                  [file.name]: {
+                    ...prev.files[file.name],
+                    status: 'error' as const,
+                    error: error.error || error
+                  }
+                };
 
-                  const hasInProgressFiles = Object.values(updatedFiles)
-                    .some(file => file.status === 'uploading');
-                  const totalProgress = calculateTotalProgress(updatedFiles);
+                const hasInProgressFiles = Object.values(updatedFiles)
+                  .some(file => file.status === 'uploading');
+                const totalProgress = calculateTotalProgress(updatedFiles);
 
-                  return {
-                    files: updatedFiles,
-                    totalProgress,
-                    status: hasInProgressFiles ? 'uploading' : 'error'
-                  };
-                });
-                options.onError?.(
-                  error.error || error,
-                  file
-                );
-              },
-              onStart: () => {
-                options.onStart?.(file);
-              },
-            });
+                return {
+                  files: updatedFiles,
+                  totalProgress,
+                  status: hasInProgressFiles ? 'uploading' : 'error'
+                };
+              });
+              options.onError?.(
+                error.error || error,
+                file
+              );
+            },
+            onStart: () => {
+              options.onStart?.(file);
+            },
+          });
 
-            fileResponses[file.name] = response;
-            return response;
-          } catch (error) {
-            console.log("Upload failed:", error);
-            const errorObj = error instanceof Error ? error : new Error('Upload failed');
-            setUploadState(prev => ({
-              ...prev,
-              files: {
-                ...prev.files,
-                [file.name]: {
-                  ...prev.files[file.name],
-                  status: 'error',
-                  error: errorObj
-                }
-              }
-            }));
-            options.onError?.(errorObj, file);
-            return fileResponses[file.name] || null;
-          }
+          fileResponses[file.name] = response;
+          return response;
         });
         console.log("Uploade started")
-        await Promise.allSettled(uploadPromises);
+        const results = await Promise.allSettled(uploadPromises);
         console.log("Upload completed final:", fileResponses);
         return fileResponses;
       } catch (error) {
