@@ -29,7 +29,7 @@ export interface UploadState {
 export declare function useUploaderMultiFile(config: UploaderConfig): {
     upload: (files: File[], options?: UploadOptions) => Promise<{
         [k: string]: any;
-    } | undefined>;
+    }>;
     cancelUpload: (fileId?: string) => void;
     cancelFileUpload: (fileName: string) => void;
     reset: () => void;

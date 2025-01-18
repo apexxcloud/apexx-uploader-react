@@ -206,7 +206,7 @@ export function useUploaderMultiFile(config: UploaderConfig) {
         const successfulResponses = Object.fromEntries(
           Object.entries(fileResponses).filter(([_, response]) => response != null)
         );
-        
+      
         return successfulResponses;
       } catch (error) {
 
@@ -215,7 +215,7 @@ export function useUploaderMultiFile(config: UploaderConfig) {
           status: 'error'
         }));
 
-        throw error;
+      
      
       }
     },
