@@ -204,6 +204,7 @@ function useUploaderMultiFile(config) {
                     return response;
                 }
                 catch (error) {
+                    console.log("Innner promise error", error);
                     const errorObj = error instanceof Error ? error : new Error('Upload failed');
                     setUploadState(prev => (Object.assign(Object.assign({}, prev), { files: Object.assign(Object.assign({}, prev.files), { [file.name]: Object.assign(Object.assign({}, prev.files[file.name]), { status: 'error', error: errorObj }) }) })));
                     (_a = options.onError) === null || _a === void 0 ? void 0 : _a.call(options, errorObj, file);

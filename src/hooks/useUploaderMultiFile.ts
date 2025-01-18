@@ -206,7 +206,7 @@ export function useUploaderMultiFile(config: UploaderConfig) {
           ...prev,
           status: 'error'
         }));
-        throw error;
+     
       }
     },
     [config, initializeUploader]
