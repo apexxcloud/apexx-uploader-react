@@ -111,7 +111,7 @@ export function useUploaderMultiFile(config: UploaderConfig) {
               },
               onComplete: (response: any) => {
                 fileResponses[file.name] = response;
-                console.log("Inner promise complete for file", file.name, response)
+              
                 setUploadState(prev => {
                   const updatedFiles = {
                     ...prev.files,
@@ -146,7 +146,7 @@ export function useUploaderMultiFile(config: UploaderConfig) {
                 );
               },
               onError: (error: any) => {
-                console.log("Inner promise callback error for file", file.name, error)
+    
                 setUploadState(prev => {
                   const updatedFiles = {
                     ...prev.files,
@@ -177,10 +177,10 @@ export function useUploaderMultiFile(config: UploaderConfig) {
               },
             });
             fileResponses[file.name] = response;
-            console.log("Inner promise response for file", file.name, response)
+
             return response;
           } catch (error) {
-            console.log("Innner promise error for file", file.name, error)
+  
             const errorObj = error instanceof Error ? error : new Error('Upload failed');
             setUploadState(prev => ({
               ...prev,
@@ -209,7 +209,7 @@ export function useUploaderMultiFile(config: UploaderConfig) {
         
         return successfulResponses;
       } catch (error) {
-        console.error("OuterPromise error:", error);
+
         setUploadState(prev => ({
           ...prev,
           status: 'error'
