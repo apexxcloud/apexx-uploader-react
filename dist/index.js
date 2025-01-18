@@ -168,7 +168,6 @@ function useUploaderMultiFile(config) {
                         }, onComplete: (response) => {
                             var _a;
                             fileResponses[file.name] = response;
-                            console.log("Inner promise complete for file", file.name, response);
                             setUploadState(prev => {
                                 const updatedFiles = Object.assign(Object.assign({}, prev.files), { [file.name]: Object.assign(Object.assign({}, prev.files[file.name]), { progress: 100, status: 'completed', response }) });
                                 const activeFiles = Object.values(updatedFiles)
@@ -185,7 +184,6 @@ function useUploaderMultiFile(config) {
                             (_a = options.onComplete) === null || _a === void 0 ? void 0 : _a.call(options, Object.assign(Object.assign({}, response), { fileName: file.name, fileId: file.name }), file);
                         }, onError: (error) => {
                             var _a;
-                            console.log("Inner promise callback error for file", file.name, error);
                             setUploadState(prev => {
                                 const updatedFiles = Object.assign(Object.assign({}, prev.files), { [file.name]: Object.assign(Object.assign({}, prev.files[file.name]), { status: 'error', error: error.error || error }) });
                                 const hasInProgressFiles = Object.values(updatedFiles)
@@ -203,11 +201,9 @@ function useUploaderMultiFile(config) {
                             (_a = options.onStart) === null || _a === void 0 ? void 0 : _a.call(options, file);
                         } }));
                     fileResponses[file.name] = response;
-                    console.log("Inner promise response for file", file.name, response);
                     return response;
                 }
                 catch (error) {
-                    console.log("Innner promise error for file", file.name, error);
                     const errorObj = error instanceof Error ? error : new Error('Upload failed');
                     setUploadState(prev => (Object.assign(Object.assign({}, prev), { files: Object.assign(Object.assign({}, prev.files), { [file.name]: Object.assign(Object.assign({}, prev.files[file.name]), { status: 'error', error: errorObj }) }) })));
                     (_a = options.onError) === null || _a === void 0 ? void 0 : _a.call(options, errorObj, file);
@@ -222,7 +218,6 @@ function useUploaderMultiFile(config) {
             return successfulResponses;
         }
         catch (error) {
-            console.error("OuterPromise error:", error);
             setUploadState(prev => (Object.assign(Object.assign({}, prev), { status: 'error' })));
         }
     }), [config, initializeUploader]);
