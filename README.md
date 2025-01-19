@@ -87,79 +87,6 @@ interface UploadOptions {
 
 ```
 
-## Server-Side Implementation
-
-### AWS S3 or S3-compatible Storage
-
-```typescript
-const aws = require("aws-sdk");
-
-let s3 = new aws.S3({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  signatureVersion: "v4",
-  region: "ap-south-1",
-});
-
-const getPresignedUrl = async (req, res) => {
-  try {
-    const { operation = "putObject" } = req.body;
-    const { params } = req.body;
-  
-    const url = await s3.getSignedUrlPromise(operation, {
-      ...params,
-      Bucket: "your-bucket-name",
-    });
-
-    res.status(200).json({
-      url,
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      error: error.message,
-    });
-  }
-};
-```
-
-### Apexx Cloud Storage
-
-```typescript
-const ApexxCloud = require("@apexxcloud/sdk-node");
-
-const storage = new ApexxCloud({
-  accessKey: process.env.APEXXCLOUD_ACCESS_KEY,
-  secretKey: process.env.APEXXCLOUD_SECRET_KEY,
-  region: process.env.APEXXCLOUD_REGION,
-  bucket: process.env.APEXXCLOUD_BUCKET,
-});
-
-const getSignedUrl = async (req, res) => {
-  try {
-    const { operation } = req.body;
-    const { params } = req.body; // Contains key, mimeType, totalParts, etc.
-
-    const signedUrl = await storage.files.getSignedUrl(
-      operation,
-      {
-        ...params,
-      }
-    );
-
-    res.send({
-      url: signedUrl,
-    });
-  } catch (error) {
-    res.status(500).send({
-      error: error.message,
-    });
-  }
-};
-```
-
-These server-side implementations provide the necessary endpoints for generating signed URLs that the uploader will use. The client will call these endpoints through the `getSignedUrl` configuration option.
-
 
 ### Cancellation Functions
 
@@ -284,6 +211,78 @@ Effects:
 - Does not cancel active uploads (use `cancelUpload` for that)
 
 
+## Server-Side Implementation
+
+### AWS S3 or S3-compatible Storage
+
+```typescript
+const aws = require("aws-sdk");
+
+let s3 = new aws.S3({
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  signatureVersion: "v4",
+  region: "ap-south-1",
+});
+
+const getPresignedUrl = async (req, res) => {
+  try {
+    const { operation = "putObject" } = req.body;
+    const { params } = req.body;
+  
+    const url = await s3.getSignedUrlPromise(operation, {
+      ...params,
+      Bucket: "your-bucket-name",
+    });
+
+    res.status(200).json({
+      url,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      error: error.message,
+    });
+  }
+};
+```
+
+### Apexx Cloud Storage
+
+```typescript
+const ApexxCloud = require("@apexxcloud/sdk-node");
+
+const storage = new ApexxCloud({
+  accessKey: process.env.APEXXCLOUD_ACCESS_KEY,
+  secretKey: process.env.APEXXCLOUD_SECRET_KEY,
+  region: process.env.APEXXCLOUD_REGION,
+  bucket: process.env.APEXXCLOUD_BUCKET,
+});
+
+const getSignedUrl = async (req, res) => {
+  try {
+    const { operation } = req.body;
+    const { params } = req.body; // Contains key, mimeType, totalParts, etc.
+
+    const signedUrl = await storage.files.getSignedUrl(
+      operation,
+      {
+        ...params,
+      }
+    );
+
+    res.send({
+      url: signedUrl,
+    });
+  } catch (error) {
+    res.status(500).send({
+      error: error.message,
+    });
+  }
+};
+```
+
+These server-side implementations provide the necessary endpoints for generating signed URLs that the uploader will use. The client will call these endpoints through the `getSignedUrl` configuration option.
 
 ## Prebuilt Components
 
