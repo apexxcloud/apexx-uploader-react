@@ -37,89 +37,6 @@ typeof SuppressedError === "function" ? SuppressedError : function (error, suppr
 
 function useUploader(config) {
     const [uploadState, setUploadState] = react.useState({
-        progress: 0,
-        status: 'idle',
-    });
-    const abortControllerRef = react.useRef(null);
-    const uploaderRef = react.useRef(null);
-    const initializeUploader = react.useCallback(() => {
-        if (!uploaderRef.current) {
-            const UploaderClass = config.provider === 'aws' ? apexxUploaderCore.AwsCore : apexxUploaderCore.ApexxCloudCore;
-            uploaderRef.current = new UploaderClass();
-        }
-        return uploaderRef.current;
-    }, [config.provider]);
-    const upload = react.useCallback((file_1, ...args_1) => __awaiter(this, [file_1, ...args_1], void 0, function* (file, options = {}) {
-        try {
-            const uploader = initializeUploader();
-            setUploadState({ progress: 0, status: 'uploading' });
-            abortControllerRef.current = new AbortController();
-            const method = options.multipart ? 'uploadMultipart' : 'upload';
-            const response = yield uploader.files[method](file, config.getSignedUrl, {
-                key: options.key,
-                partSize: options.partSize,
-                concurrency: options.concurrency,
-                signal: abortControllerRef.current.signal,
-                onProgress: (progressData) => {
-                    var _a;
-                    setUploadState({
-                        progress: progressData.progress,
-                        status: 'uploading',
-                    });
-                    (_a = options.onProgress) === null || _a === void 0 ? void 0 : _a.call(options, progressData);
-                },
-                onComplete: (response) => {
-                    var _a;
-                    setUploadState({
-                        progress: 100,
-                        status: 'completed',
-                    });
-                    (_a = options.onComplete) === null || _a === void 0 ? void 0 : _a.call(options, response);
-                },
-                onError: (error) => {
-                    var _a;
-                    setUploadState({
-                        progress: 0,
-                        status: 'error',
-                        error: error.error || error,
-                    });
-                    (_a = options.onError) === null || _a === void 0 ? void 0 : _a.call(options, error.error || error);
-                },
-                onStart: () => {
-                    var _a;
-                    (_a = options.onStart) === null || _a === void 0 ? void 0 : _a.call(options, file);
-                },
-            });
-            return response;
-        }
-        catch (error) {
-            setUploadState({
-                progress: 0,
-                status: 'error',
-                error: error,
-            });
-            throw error;
-        }
-    }), [config, initializeUploader]);
-    const cancelUpload = react.useCallback(() => {
-        var _a;
-        (_a = abortControllerRef.current) === null || _a === void 0 ? void 0 : _a.abort();
-        setUploadState({
-            progress: 0,
-            status: 'idle',
-        });
-    }, []);
-    return {
-        upload,
-        cancelUpload,
-        progress: uploadState.progress,
-        status: uploadState.status,
-        error: uploadState.error,
-    };
-}
-
-function useUploaderMultiFile(config) {
-    const [uploadState, setUploadState] = react.useState({
         files: {},
         totalProgress: 0,
         status: 'idle',
@@ -136,6 +53,7 @@ function useUploaderMultiFile(config) {
     const upload = react.useCallback((files_1, ...args_1) => __awaiter(this, [files_1, ...args_1], void 0, function* (files, options = {}) {
         const uploader = initializeUploader();
         const fileResponses = {};
+        const errorFiles = {};
         setUploadState(prev => ({
             files: files.reduce((acc, file) => (Object.assign(Object.assign({}, acc), { [file.name]: {
                     fileId: file.name,
@@ -186,6 +104,7 @@ function useUploaderMultiFile(config) {
                             var _a;
                             setUploadState(prev => {
                                 const updatedFiles = Object.assign(Object.assign({}, prev.files), { [file.name]: Object.assign(Object.assign({}, prev.files[file.name]), { status: 'error', error: error.error || error }) });
+                                errorFiles[file.name] = error.error || error;
                                 const hasInProgressFiles = Object.values(updatedFiles)
                                     .some(file => file.status === 'uploading');
                                 const totalProgress = calculateTotalProgress(updatedFiles);
@@ -282,5 +201,4 @@ function useUploaderMultiFile(config) {
 }
 
 exports.useUploader = useUploader;
-exports.useUploaderMultiFile = useUploaderMultiFile;
 //# sourceMappingURL=index.js.map
