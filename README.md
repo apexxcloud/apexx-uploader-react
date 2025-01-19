@@ -428,6 +428,20 @@ function UploaderWithState() {
 }
 ```
 
+## Prebuilt Components
+
+Looking for ready-to-use components? Check out our [prebuilt components source code](https://github.com/apexxcloud/apexx-uploader-prebuilt) for reference implementations you can copy into your project.
+
+### Available Components
+
+#### UploadButton
+A simple button component that handles file selection and upload.
+
+#### UploadDashboard
+A full-featured upload dashboard with progress tracking and file management.
+
+These components serve as examples of how to implement common upload UI patterns using the hooks from this library. Feel free to copy and modify them to suit your needs.
+
 ## License
 
 MIT © [Fii](https://twitter.com/CODEFIISTAR)
